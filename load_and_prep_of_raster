@@ -8,7 +8,7 @@ clc;
 
 %% PREP THE RASTER TO BE ANALYZED 
 raster_file_name = 'name_of_raster_file.mat'; % input the name of the raster file for the culture data 
-                                                 % (e.g. time_bins x num_of_electrodes array containing LFP values)
+                                              % (e.g. time_bins x num_of_electrodes array containing LFP values)
 
 %% MAKE DIRECTORY TO STORE THE GENERATED FIGURES 
 avalanche_figure_path = fullfile('path to your wanted directory', raster_file_name);
