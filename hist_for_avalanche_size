@@ -1,0 +1,85 @@
+function slope_array = density_plot_avalanche_size(Aval, k_range)
+
+tic;
+%% DENSITY PLOT FOR AVALANCHE SIZE
+% plotting actual density
+subplot(2,2,1);
+iii = 1;
+maximum = 1;
+
+avalanche_size_per_duration_k = []; 
+for k = 1:k_range
+    avalanche_k_portion2 = Aval(:,iii+2);
+    avalanche_k_portion2 = sortrows(avalanche_k_portion2, 1);
+    avalanche_k_portion = avalanche_k_portion2(avalanche_k_portion2 ~= 0);
+    
+    data = avalanche_k_portion(:);
+    [nbins, ~] = histcounts(data, 'BinMethod', 'fd');
+    normalized_pdf = nbins ./ sum(nbins);
+    plot(1:length(nbins), normalized_pdf)
+    hold on
+    
+    set(gca,'XScale','log');
+    set(gca,'YScale','log');
+    ax.YScale = 'log';
+    ax.XScale = 'log';
+    
+    if length(nbins) > maximum
+        maximum = max(length(nbins));
+    end
+    
+    avalanche_size_per_duration_k(k, 1:length(normalized_pdf)) = normalized_pdf(1,:);
+    iii = iii + 3;
+end
+
+%% reference lines with different slopes 
+logx2 = log10(1:maximum);
+
+y_vals_for_2 = 10.^[polyval([-2, -0.5],[logx2(1) logx2(end)])];
+a = loglog([1 maximum], y_vals_for_2, '--', 'LineWidth', 1.5, 'Color', 'black');
+hold on
+uistack(a, 'top');
+y_vals_for_1andhalf = 10.^[polyval([-1.5, -0.5],[logx2(1) logx2(end)])];
+b = loglog([1 maximum], y_vals_for_1andhalf, '--', 'LineWidth', 1.5, 'Color', 'red');
+hold on
+uistack(b, 'top');
+y_vals_for_1 = 10.^[polyval([-1, -0.5],[logx2(1) logx2(end)])];
+c = loglog([1 maximum], y_vals_for_1, '--', 'LineWidth', 1.5, 'Color', 'green');
+hold on
+uistack(c, 'top');
+y_vals_for_half = 10.^[polyval([-0.5, -0.5],[logx2(1) logx2(end)])];
+d = loglog([1 maximum], y_vals_for_half, '--', 'LineWidth', 1.5, 'Color', 'blue');
+hold on
+uistack(d, 'top');
+
+%% axis labels + scaling + plot adjustment
+% labels
+title('PDF for Avalanche Size (K = 1-10)', 'FontSize', 10);
+xlabel('Avalanche Size Histogram Bin', 'FontSize', 10);
+ylabel('Probability Density Function (PDF)', 'FontSize', 10);
+axis square;
+lgd = legend('k = 1', 'k = 2', 'k = 3', 'k = 4', 'k = 5', 'k = 6', 'k = 7', 'k = 8', 'k = 9', 'k = 10', '\alpha = 2', '\alpha = 1.5', '\alpha = 1', '\alpha = 0.5', ...
+    'Location', 'northwest', 'Orientation', 'horizontal', 'NumColumns', 2);
+lgd.FontSize = 6;
+set(lgd, 'Position', [.282,.58,.1,.1]);
+
+% axis scaling + limits
+ylim([10.^-4 1]);
+camroll(90);
+
+%% log translating x and y + poly fitting to generate coefficients and line of best fit per k
+iii = 1;
+slope_array = [];
+
+for k = 1:k_range
+    logx = log10(1:10);
+    logy = log10(avalanche_size_per_duration_k(k, 1:10));
+    log_coefficients = polyfit(logx, logy, 1);
+    
+    slope_array(1, k) = abs(log_coefficients(1));
+    
+    iii = iii + 3;
+end
+
+fprintf('\nDone Generating Density Plot for Size\n')
+toc;
