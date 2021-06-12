@@ -1,0 +1,80 @@
+function density_for_avalanche_dur_vs_size(Aval, raster_file_name, avalanche_figure_path)
+
+tic;
+%% CALCULATE DENSITY FOR AVALANCHE DURATION VS SIZE (TILES WITH TOTAL NUM OF POINTS)
+iii = 1;
+section = 1;
+
+figure(2); 
+for k = 1:5
+    avalanche_k_portion = Aval(:,iii+1:iii+2);
+    avalanche_k_portion = sortrows(avalanche_k_portion, 1);
+    
+    data = avalanche_k_portion(:, 1:2);
+    optimal_duration_bins = max(data(:,1));
+    [optimal_size_bins, ~] = histcounts(data(:,2), 'BinMethod', 'fd');
+    [nbins, ~] = hist3(data, 'Nbins', [optimal_duration_bins length(optimal_size_bins)]);
+    normalized_pdf = (nbins ./ sum(nbins))';
+    
+    % plot the actual data 
+    subplot(2, 3, section)
+    colorMap = jet(256);
+    colormap(colorMap);
+    contourf(normalized_pdf(1:end, :));
+    hold on
+    colorbar
+    hold on
+    
+    % reference lines with different slopes
+    logx2 = log10(1:optimal_duration_bins);
+    
+    y_vals_for_2 = 10.^[polyval([2, 0],[logx2(1) logx2(end)])];
+    a = loglog([1 optimal_duration_bins], y_vals_for_2, '--', 'LineWidth', 1.5, 'Color', 'black');
+    hold on
+    uistack(a, 'top');
+    y_vals_for_1andhalf = 10.^[polyval([1.5, 0],[logx2(1) logx2(end)])];
+    b = loglog([1 optimal_duration_bins], y_vals_for_1andhalf, '--', 'LineWidth', 1.5, 'Color', 'red');
+    hold on
+    uistack(b, 'top');
+    y_vals_for_1 = 10.^[polyval([1, 0],[logx2(1) logx2(end)])];
+    c = loglog([1 optimal_duration_bins], y_vals_for_1, '--', 'LineWidth', 1.5, 'Color', 'green');
+    hold on
+    uistack(c, 'top');
+    y_vals_for_half = 10.^[polyval([0.5, 0],[logx2(1) logx2(end)])];
+    d = loglog([1 optimal_duration_bins], y_vals_for_half, '--', 'LineWidth', 1.5, 'Color', 'yellow');
+    hold on
+    uistack(d, 'top');
+        
+    % modify axis scaling
+    set(gca,'XScale','log');
+    set(gca,'YScale','log');
+    ax.YScale = 'log';
+    ax.XScale = 'log';
+    axis square;
+    xlim([1 optimal_duration_bins]);
+    ylim([0 floor(0.5*length(optimal_size_bins))]); 
+    
+    % labels
+    title(strcat(['PDF for Size vs Duration (K = ', num2str(k), ')']));
+    xlabel('Avalanche Duration (n)');
+    ylabel('Avalanche Size Histogram Bin');
+    zlabel('PDF Per Bin');
+    lgd = legend('PDF Value Per Bin > 0', '\alpha = 2', '\alpha = 1.5', '\alpha = 1', '\alpha = 0.5', 'Location', 'southeast');
+    lgd.FontSize = 6;
+    
+    iii = iii + 3;
+    section = section + 1;
+end
+
+% SAVE GENERATED SUBPLOT UNDER PROPER NAME AND IN CORRECT LOCATION
+sgtitle(raster_file_name);
+set(gcf,'WindowState','maximized');
+
+save_file_name = strsplit(raster_file_name, '.');
+save_file_name2 = strcat(string(char(save_file_name(1))), '_contour_plots');
+saveas(gcf, fullfile(avalanche_figure_path, save_file_name2), 'epsc');
+hold off
+
+
+fprintf('\nDone Generating Contour Plots for Density Plot of Size vs Duration\n')
+toc;
